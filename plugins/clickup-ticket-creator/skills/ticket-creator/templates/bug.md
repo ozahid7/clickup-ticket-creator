@@ -11,6 +11,12 @@ What is wrong and its impact.
 **Actual result**
 (error messages verbatim)
 
+**Affected code**
+- path/to/file-or-route
+
+**Changes**
+- (Case B only)
+
 **Environment**
 - Env: local / staging / prod
 - Branch/commit:

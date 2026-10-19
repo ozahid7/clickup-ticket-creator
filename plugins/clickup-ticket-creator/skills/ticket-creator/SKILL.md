@@ -76,12 +76,22 @@ Use what the user said. Otherwise infer:
 - **Case B, PR already exists:** the arguments name a PR (number or URL), or the user says the ticket is for the current PR. Read it with git only, and use that content to fill the description. Run the git commands in parallel.
   - Default branch: `git symbolic-ref --short refs/remotes/origin/HEAD` (e.g. `origin/main`). Call it `<base>` below.
   - Read cheap first: `git log --format='%s%n%b' <base>..HEAD` and `git diff --stat <base>...HEAD`. Open the full diff of specific files only when that is not enough to describe the change.
+  - The `--stat` file list feeds **Affected code**. The log feeds **Changes**: 3 to 6 bullets summarizing what the commits did.
   - Current branch: branch from `git branch --show-current`, content from the commands above.
   - PR number given: `git fetch origin pull/<n>/head`, then the same commands against `<base>...FETCH_HEAD`. Branch name: the entry in `git ls-remote --heads origin` with the same sha as FETCH_HEAD, else "Unknown".
   - PR link: the URL the user gave, else `https://github.com/<owner>/<repo>/pull/<n>` built from `git remote get-url origin`. If only "current PR" was said and the number is unknown, ask the user for it.
 
 ### 6. Description
-Read the template file for the type (table in step 2) and fill it. Facts only: write "Unknown" for anything missing, never guess. Write it so a stranger understands it six months from now.
+Read the template file for the type (table in step 2) and fill it. Facts only, never guess. Write it so a stranger understands it six months from now.
+
+Required sections are always shown; write "Unknown" if there is no fact for them:
+- Bug / Hotfix: Description, Steps to reproduce, Expected result, Actual result
+- Feature / Enhancement: Context, Scope, Acceptance criteria
+- Refactor / Chore / Docs: What, Why
+
+Every other section and field (Environment lines, Evidence, Frequency, Out of scope, Affected code) is omitted when there is no fact for it. Do not write "Unknown" in them.
+
+**Affected code** lists the files, routes or components when the user named them or Case B gives them. **Changes** is Case B only; drop it in Case A.
 
 Every template ends with a **GitHub** section. Fill what exists, leave the rest as "None yet".
 
