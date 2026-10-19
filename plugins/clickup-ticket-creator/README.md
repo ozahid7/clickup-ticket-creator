@@ -18,6 +18,8 @@ The plugin bundles two MCP servers in `.mcp.json`:
 - `clickup`: https://mcp.clickup.com/mcp (OAuth)
 - `playwright`: `npx @playwright/mcp@latest` (only used for screenshots, needs Node)
 
+The first run saves your list and assignee to `.claude/ticket-creator.local.json` (excluded from git) so later runs skip the workspace lookup. Delete that file to reset.
+
 ## Install in Codex
 
 ```

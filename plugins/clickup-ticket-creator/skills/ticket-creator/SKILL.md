@@ -1,6 +1,7 @@
 ---
 name: ticket-creator
 description: Create a ClickUp ticket in the house format (assignee, type, title, priority, type-specific description, GitHub branch/PR linking, optional Playwright screenshots). Use whenever the user types /ticket-creator or /ticket, or asks to create, open, log or file a ticket, task, bug or issue in ClickUp, or to make a ticket from a PR, even if they don't say "ClickUp".
+allowed-tools: mcp__plugin_clickup-ticket-creator_clickup, Bash(git log:*), Bash(git diff:*), Bash(git branch:*), Bash(git remote:*), Bash(git fetch:*), Bash(git ls-remote:*), Bash(git config:*), Bash(git symbolic-ref:*)
 ---
 
 # Ticket creator
@@ -8,10 +9,23 @@ description: Create a ClickUp ticket in the house format (assignee, type, title,
 Create one ClickUp ticket from `$ARGUMENTS` (free text). The text may also contain a PR number or URL, a page URL, a screenshot path, a priority, a list name, or the words "screenshots" / "images".
 
 Defaults:
-- No default list. Use the list named in the arguments; if none is named, call `clickup_get_workspace_hierarchy` and ask the user which list (step 0).
 - Needs only `git` and the ClickUp MCP. Never use `gh` or any CLI that has to be installed first.
 - If AskUserQuestion or ToolSearch is not available (e.g. Codex), ask the same questions in plain chat and call the ClickUp tools directly; treat the user's request as $ARGUMENTS.
-- Load the ClickUp tools with ToolSearch before first use (`clickup_get_workspace_hierarchy`, `clickup_get_list`, `clickup_create_task`, `clickup_update_task`, `clickup_find_member_by_name`, `clickup_resolve_assignees`, `clickup_request_attachment_upload`). Load Playwright tools only when screenshots are requested.
+- Load the ClickUp tools with ONE ToolSearch call (`select:clickup_get_list,clickup_create_task,clickup_update_task,clickup_resolve_assignees,clickup_find_member_by_name,clickup_get_workspace_hierarchy,clickup_request_attachment_upload`). Load Playwright tools only when screenshots are requested.
+- Run independent calls in the same turn (list fetch, assignee lookup, git commands). Only sequence calls that depend on each other.
+
+## Cache
+
+File: `.claude/ticket-creator.local.json` in the repo root.
+
+```json
+{ "listId": "", "listName": "", "assigneeId": "" }
+```
+
+- Read it first. When present, it replaces the hierarchy fetch and the assignee lookup.
+- Write it after the first successful run. Also append `.claude/ticket-creator.local.json` to `.git/info/exclude` so it is never committed.
+- Ignore the cached list when the arguments name a different list, and overwrite the file with the new one.
+- If a ClickUp call fails because the list or member id is unknown, delete the cache and redo the lookup once.
 
 ## Workflow
 
@@ -19,8 +33,8 @@ Follow in order. Stop and ask the user only where a step says so.
 
 ### 0. Ask first (always)
 Before any other step, always ask the user two questions, even when the arguments already mention a column or a type. Do not create a ticket, branch or PR edit before both are answered.
-0. Resolve the target list. If the arguments name one, find it with `clickup_get_workspace_hierarchy`. Otherwise call `clickup_get_workspace_hierarchy` and ask the user which list with `AskUserQuestion` (max 4 options; the rest stay reachable via "Other").
-1. Call `clickup_get_list` on the target list and read `statuses` in `orderindex` order. These are the board columns, fetched live so new columns appear automatically.
+0. Resolve the target list. Use the list named in the arguments, else the cached list. If neither exists, call `clickup_get_workspace_hierarchy` and ask the user which list with `AskUserQuestion` (max 4 options; the rest stay reachable via "Other").
+1. Call `clickup_get_list` on the target list and read `statuses` in `orderindex` order. These are the board columns, fetched live so new columns appear automatically. Fetch the assignee (step 1) in the same turn.
 2. Make one `AskUserQuestion` call with two questions:
    - **Column**: which column the ticket goes in. One option per status (max 4; if there are more, show the first 4 and the rest stay reachable via "Other").
    - **Type**: Bug, Hotfix, Feature, Enhancement, Refactor, Chore or Docs. The tool shows at most 4 options, so offer the 4 most fitting types for the request, best guess first marked "(Recommended)", and name all 7 types in the question text so the others can be typed via "Other".
@@ -28,22 +42,22 @@ Before any other step, always ask the user two questions, even when the argument
 
 ### 1. Assignee
 Always assign to the user, never to anyone else.
-1. Run `git config user.name` and `git config user.email`.
-2. Match a ClickUp workspace member by email first, then by name (`clickup_find_member_by_name`, `clickup_resolve_assignees`).
+1. Use `assigneeId` from the cache when present.
+2. Otherwise call `clickup_resolve_assignees` with `"me"`. If that returns no match, run `git config user.name` and `git config user.email` and match a workspace member by email first, then by name (`clickup_find_member_by_name`).
 3. No match: stop and ask. Do not create the ticket unassigned.
 
 ### 2. Type
 Use the type answered in step 0. Exactly one:
 
-| Type        | When                                             | Branch prefix |
-|-------------|--------------------------------------------------|---------------|
-| Bug         | Something is broken or behaves incorrectly       | bug/          |
-| Hotfix      | Critical production bug that needs an urgent fix | hotfix/       |
-| Feature     | New functionality that didn't exist before       | feature/      |
-| Enhancement | Improvement to existing functionality            | enhance/      |
-| Refactor    | Code change with no behavior change              | refactor/     |
-| Chore       | Tooling, dependencies, config, CI                | chore/        |
-| Docs        | Documentation only                               | docs/         |
+| Type        | When                                             | Branch prefix | Template                    |
+|-------------|--------------------------------------------------|---------------|-----------------------------|
+| Bug         | Something is broken or behaves incorrectly       | bug/          | `templates/bug.md`          |
+| Hotfix      | Critical production bug that needs an urgent fix | hotfix/       | `templates/bug.md`          |
+| Feature     | New functionality that didn't exist before       | feature/      | `templates/feature.md`      |
+| Enhancement | Improvement to existing functionality            | enhance/      | `templates/feature.md`      |
+| Refactor    | Code change with no behavior change              | refactor/     | `templates/maintenance.md`  |
+| Chore       | Tooling, dependencies, config, CI                | chore/        | `templates/maintenance.md`  |
+| Docs        | Documentation only                               | docs/         | `templates/maintenance.md`  |
 
 The type is set as a lowercase tag on the ticket (`bug`, `hotfix`, `feature`, `enhancement`, `refactor`, `chore`, `docs`).
 
@@ -59,78 +73,24 @@ Use what the user said. Otherwise infer:
 
 ### 5. Source: normal flow or existing PR
 - **Case A, ticket first:** the description comes from the user's text.
-- **Case B, PR already exists:** the arguments name a PR (number or URL), or the user says the ticket is for the current PR. Read it with git only, and use that content to fill the description:
-  - Current branch: branch from `git branch --show-current`, content from `git log origin/main..HEAD` and `git diff origin/main...HEAD` (use the repo's default branch if not `main`).
-  - PR number given: `git fetch origin pull/<n>/head`, then `git log` and `git diff` of `origin/main...FETCH_HEAD`. Branch name: the entry in `git ls-remote --heads origin` with the same sha as FETCH_HEAD, else "Unknown".
+- **Case B, PR already exists:** the arguments name a PR (number or URL), or the user says the ticket is for the current PR. Read it with git only, and use that content to fill the description. Run the git commands in parallel.
+  - Default branch: `git symbolic-ref --short refs/remotes/origin/HEAD` (e.g. `origin/main`). Call it `<base>` below.
+  - Read cheap first: `git log --format='%s%n%b' <base>..HEAD` and `git diff --stat <base>...HEAD`. Open the full diff of specific files only when that is not enough to describe the change.
+  - Current branch: branch from `git branch --show-current`, content from the commands above.
+  - PR number given: `git fetch origin pull/<n>/head`, then the same commands against `<base>...FETCH_HEAD`. Branch name: the entry in `git ls-remote --heads origin` with the same sha as FETCH_HEAD, else "Unknown".
   - PR link: the URL the user gave, else `https://github.com/<owner>/<repo>/pull/<n>` built from `git remote get-url origin`. If only "current PR" was said and the number is unknown, ask the user for it.
 
 ### 6. Description
-Use the template for the type. Facts only: write "Unknown" for anything missing, never guess. Write it so a stranger understands it six months from now.
+Read the template file for the type (table in step 2) and fill it. Facts only: write "Unknown" for anything missing, never guess. Write it so a stranger understands it six months from now.
 
-**Bug / Hotfix**
-```
-**Description**
-What is wrong and its impact.
-
-**Steps to reproduce**
-1.
-2.
-3.
-
-**Expected result**
-
-**Actual result**
-(error messages verbatim)
-
-**Environment**
-- Env: local / staging / prod
-- Branch/commit:
-- Browser/OS:
-- User role:
-
-**Evidence**
-Screenshots (only if requested), console errors, logs.
-
-**Frequency:** always / sometimes / once
-```
-
-**Feature / Enhancement**
-```
-**Context**
-Why this is needed: the problem or user need.
-
-**Scope**
-What to build or change.
-
-**Acceptance criteria**
-- [ ]
-- [ ]
-
-**Out of scope**
-```
-
-**Refactor / Chore / Docs**
-```
-**What**
-
-**Why**
-
-**Acceptance criteria**
-- [ ]
-```
-
-Every ticket ends with:
-```
-**GitHub**
-- Branch:
-- PR: #<number> <link>
-```
-Fill what exists, leave the rest as "None yet".
+Every template ends with a **GitHub** section. Fill what exists, leave the rest as "None yet".
 
 ### 7. Create
 Call `clickup_create_task` with the list, title, `markdown_description`, priority, the assignee id, `status: <column from step 0>` and `tags: [<type>]`.
 
 If the call fails because the tag does not exist in the space, retry once without tags and tell the user: "Tag `<type>` is missing in the space, add it in ClickUp space settings." Do not stop the flow.
+
+After the first successful create, write the cache file (see Cache).
 
 ### 8. GitHub linking (the ticket references the PR, the PR references the ticket)
 Let `<id>` be the returned task id and `<link>` its URL.
@@ -147,19 +107,7 @@ Let `<id>` be the returned task id and `<link>` its URL.
 - Do not edit the PR yourself. Print the exact new PR title `[CU-<id>] <old title>` and the lines to append to the body (`Closes CU-<id>` and `<link>`) so the user pastes them in GitHub.
 
 ### 9. Screenshots (only when explicitly asked)
-Never take or attach screenshots on your own. Skip this step unless the user asked for images or screenshots.
-
-- **User gave a file path:** attach that file and skip Playwright.
-- **Otherwise take them with the Playwright MCP:**
-  1. Open the relevant page (the URL given, or the page related to the ticket).
-  2. Reproduce the steps if needed to reach the state to capture.
-  3. Screenshot the relevant element or area, not the whole page, unless a full page was requested.
-  4. Save to `./screenshots/CU-<id>-<short-slug>.png`, numbered `-1`, `-2` when there are several.
-- **Attach as files, never inside the description.** For each file: call `clickup_request_attachment_upload` with the task id and file name, then POST it with curl, using an argument list and the ticket from the result:
-  `curl -s -X POST <upload_url> -H "X-Upload-Ticket: <ticket>" -F "attachment=@<path>;type=image/png"`
-  The ticket expires in a few minutes, so request it right before each upload.
-- **Evidence section:** list each attached screenshot with one line saying what it shows, then update the ticket description with it.
-- **Failures:** if Playwright is not connected or the page can't be reached, say so and keep the ticket without screenshots. If the upload returns `Over allocated storage` (`GBUSED_005`), the workspace storage quota is full, not the file too big: report it, keep the files on disk and give the path.
+Skip this step unless the user asked for images or screenshots. When they did, read `screenshots.md` in this skill folder and follow it.
 
 ### 10. Reply
 Reply with only:
@@ -173,6 +121,6 @@ Reply with only:
 Add one extra line only for a warning the user must act on (missing tag, upload failure).
 
 ## Rules
-- One ticket = one problem. If the request holds several, ask which one first or create separate tickets only after the user agrees.
+- One ticket = one problem. If the request holds several, ask which one first. After the user agrees to create several, use `clickup_get_operators` + `clickup_execute_operator` for a bulk create when an operation covers it, instead of N `clickup_create_task` calls.
 - Facts only. Don't guess; "Unknown" is a valid value.
 - Don't add screenshots, branches, PR edits or any other extra the user didn't ask for, except where steps 8 and 9 say so.
