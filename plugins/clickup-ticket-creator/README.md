@@ -1,6 +1,6 @@
 # clickup-ticket-creator
 
-Creates ClickUp tickets in the house format via `/ticket-creator`.
+Creates ClickUp tickets in the house format via `/ticket-creator`. Works for code tickets (bug, feature, enhancement, refactor, chore, docs, infra) and non-code tickets (design, research, meeting, task). Git is optional: branch and PR linking only apply to code tickets inside a git repo.
 
 ## Install
 

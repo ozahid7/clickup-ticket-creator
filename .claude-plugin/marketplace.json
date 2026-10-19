@@ -8,7 +8,7 @@
     {
       "name": "clickup-ticket-creator",
       "source": "./plugins/clickup-ticket-creator",
-      "description": "Create ClickUp tickets in the house format from Claude Code."
+      "description": "Create ClickUp tickets in the house format from Claude Code: code tickets (bug, feature, infra) and non-code tickets (design, research, meetings, tasks)."
     }
   ]
 }
