@@ -1,7 +1,7 @@
 {
   "name": "clickup-ticket-creator",
   "description": "A plugin to create ClickUp tickets directly from your application.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": {
     "name": "oussama zahid"
   }

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "clickup": {
+      "type": "http",
+      "url": "https://mcp.clickup.com/mcp"
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"]
+    }
+  }
+}
