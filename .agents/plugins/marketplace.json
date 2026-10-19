@@ -1,0 +1,20 @@
+{
+  "name": "ozahid-marketplace",
+  "interface": {
+    "displayName": "ozahid marketplace"
+  },
+  "plugins": [
+    {
+      "name": "clickup-ticket-creator",
+      "source": {
+        "source": "local",
+        "path": "./plugins/clickup-ticket-creator"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

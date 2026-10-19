@@ -10,6 +10,7 @@ Create one ClickUp ticket from `$ARGUMENTS` (free text). The text may also conta
 Defaults:
 - No default list. Use the list named in the arguments; if none is named, call `clickup_get_workspace_hierarchy` and ask the user which list (step 0).
 - Needs only `git` and the ClickUp MCP. Never use `gh` or any CLI that has to be installed first.
+- If AskUserQuestion or ToolSearch is not available (e.g. Codex), ask the same questions in plain chat and call the ClickUp tools directly; treat the user's request as $ARGUMENTS.
 - Load the ClickUp tools with ToolSearch before first use (`clickup_get_workspace_hierarchy`, `clickup_get_list`, `clickup_create_task`, `clickup_update_task`, `clickup_find_member_by_name`, `clickup_resolve_assignees`, `clickup_request_attachment_upload`). Load Playwright tools only when screenshots are requested.
 
 ## Workflow

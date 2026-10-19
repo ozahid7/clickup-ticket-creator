@@ -18,6 +18,15 @@ The plugin bundles two MCP servers in `.mcp.json`:
 - `clickup`: https://mcp.clickup.com/mcp (OAuth)
 - `playwright`: `npx @playwright/mcp@latest` (only used for screenshots, needs Node)
 
+## Install in Codex
+
+```
+codex plugin marketplace add ozahid7/clickup-ticket-creator
+codex plugin add clickup-ticket-creator@ozahid-marketplace
+```
+
+Authenticate the `clickup` MCP server on first use, then invoke it with `$ticket-creator` or just ask Codex to create a ticket.
+
 ## Already have them?
 
 If you already have a ClickUp connector or the Playwright plugin, disable the bundled duplicates in `/mcp`.
