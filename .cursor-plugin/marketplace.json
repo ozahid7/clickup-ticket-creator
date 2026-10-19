@@ -1,0 +1,16 @@
+{
+  "name": "ozahid-marketplace",
+  "owner": {
+    "name": "oussama zahid"
+  },
+  "metadata": {
+    "description": "Plugins for my team and I to use with Claude"
+  },
+  "plugins": [
+    {
+      "name": "clickup-ticket-creator",
+      "source": "plugins/clickup-ticket-creator",
+      "description": "Create ClickUp tickets in the house format from Claude Code: code tickets (bug, feature, infra) and non-code tickets (design, research, meetings, tasks)."
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "clickup-ticket-creator",
+  "description": "Create ClickUp tickets in the house format from Claude Code: code tickets (bug, feature, infra) and non-code tickets (design, research, meetings, tasks).",
+  "version": "1.3.0",
+  "author": {
+    "name": "oussama zahid"
+  },
+  "repository": "https://github.com/ozahid7/clickup-ticket-creator",
+  "keywords": [
+    "clickup",
+    "tickets",
+    "productivity"
+  ],
+  "mcpServers": "./.mcp.json"
+}

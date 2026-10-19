@@ -29,6 +29,14 @@ codex plugin add clickup-ticket-creator@ozahid-marketplace
 
 Authenticate the `clickup` MCP server on first use, then invoke it with `$ticket-creator` or just ask Codex to create a ticket.
 
+## Install in Cursor
+
+Team marketplace: an admin opens Dashboard -> Plugins & MCPs -> Add Marketplace -> Import from Repo and enters `ozahid7/clickup-ticket-creator`. Users then open Customize in the sidebar, find the plugin and select Install.
+
+Local test: copy `plugins/clickup-ticket-creator` to `~/.cursor/plugins/local/clickup-ticket-creator`, run Developer: Reload Window, and check Customize.
+
+Authenticate the `clickup` MCP server on first use, then ask Cursor to create a ticket.
+
 ## Already have them?
 
 If you already have a ClickUp connector or the Playwright plugin, disable the bundled duplicates in `/mcp`.

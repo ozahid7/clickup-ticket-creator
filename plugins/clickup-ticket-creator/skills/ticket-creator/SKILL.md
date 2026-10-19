@@ -10,7 +10,7 @@ Create one ClickUp ticket from `$ARGUMENTS` (free text). The text may also conta
 
 Defaults:
 - Needs only the ClickUp MCP. `git` is used only for code tickets inside a git repo (check with `git rev-parse --is-inside-work-tree`). Never use `gh` or any CLI that has to be installed first.
-- If AskUserQuestion or ToolSearch is not available (e.g. Codex), ask the same questions in plain chat and call the ClickUp tools directly; treat the user's request as $ARGUMENTS.
+- If AskUserQuestion or ToolSearch is not available (e.g. Codex, Cursor), ask the same questions in plain chat and call the ClickUp tools directly; treat the user's request as $ARGUMENTS.
 - Load the ClickUp tools with ONE ToolSearch call (`select:clickup_get_list,clickup_create_task,clickup_update_task,clickup_resolve_assignees,clickup_find_member_by_name,clickup_get_workspace_hierarchy,clickup_request_attachment_upload`). Load Playwright tools only when screenshots are requested.
 - Run independent calls in the same turn (list fetch, assignee lookup, git commands). Only sequence calls that depend on each other.
 
