@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "clickup-ticket-creator",
-      "source": { "source": "github", "repo": "ozahid7/clickup-ticket-creator" },
+      "source": "./plugins/clickup-ticket-creator",
       "description": "A plugin to create ClickUp tickets directly from your application."
     }
   ]

@@ -5,9 +5,11 @@ Creates ClickUp tickets in the house format via `/ticket-creator`.
 ## Install
 
 ```
-/plugin marketplace add ozahid7/ozahid-marketplace
+/plugin marketplace add ozahid7/clickup-ticket-creator
 /plugin install clickup-ticket-creator@ozahid-marketplace
 ```
+
+Run it with `/clickup-ticket-creator:ticket-creator` or just ask Claude to create a ticket.
 
 Then run `/mcp` and authenticate the `clickup` server.
 
