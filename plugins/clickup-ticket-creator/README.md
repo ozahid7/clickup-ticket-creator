@@ -42,7 +42,14 @@ The plugin bundles two MCP servers in `.mcp.json`:
    claude mcp list
    ```
 
-5. Authenticate ClickUp: start `claude`, run `/mcp`, select the `clickup` server, choose Authenticate and finish the OAuth login in your browser. This step only works inside a session.
+5. Authenticate ClickUp and finish the OAuth login in your browser:
+
+   ```
+   claude mcp login plugin:clickup-ticket-creator:clickup
+   ```
+
+   Or inside a session: run `/mcp`, select the `clickup` server and choose Authenticate.
+
 6. Create a ticket, straight from the shell:
 
    ```
@@ -75,7 +82,13 @@ claude plugin uninstall clickup-ticket-creator@ozahid-marketplace
 
    or inside Codex: run `/plugins`, open ClickUp Ticket Creator and select Install plugin.
 
-3. Authenticate the `clickup` MCP server when Codex asks (at install or on first use) and finish the OAuth login in your browser.
+3. Authenticate the `clickup` MCP server and finish the OAuth login in your browser:
+
+   ```
+   codex mcp login clickup
+   ```
+
+   Check it with `codex mcp list`.
 4. Create a ticket:
 
    ```
@@ -124,6 +137,48 @@ The same flow runs in every tool:
 5. Add the word "screenshots" to your request to attach Playwright screenshots.
 
 Your list and assignee are saved to `.claude/ticket-creator.local.json` (excluded from git) in the repo, or `~/.claude/ticket-creator.local.json` outside a repo, so later runs skip the lookup. Delete that file to reset.
+
+## Usage
+
+Examples use the Claude Code form `/ticket-creator ...`. In Codex use `$ticket-creator ...`; in Cursor just ask in chat.
+
+**New bug or feature (ticket first)**: describe the problem. It suggests a branch name like `bug/CU-<id>-<slug>` and prints a PR title and body to paste. Add "and create the branch" if you want the branch made.
+
+```
+/ticket-creator login button is broken on Safari
+```
+
+**Ticket for the branch you are on**: it reads the commits and diff against the default branch to fill Affected code and Changes.
+
+```
+/ticket-creator for the current branch
+```
+
+**Ticket for an existing PR**: give a number or URL. It fills the description from the PR, then prints the new PR title `[CU-<id>] ...` and the lines to add to the body. It never edits the PR itself.
+
+```
+/ticket-creator for PR #42
+```
+
+**Several tickets at once**: one ticket is one problem, so it confirms the split with you first, then creates them together.
+
+```
+/ticket-creator 3 tickets: dark mode toggle, CSV export, fix pagination on the users page
+```
+
+**Not related to code**: design, research, meeting and task tickets need no git repo and get no branch or GitHub section.
+
+```
+/ticket-creator design new onboarding screens in Figma
+/ticket-creator research: compare Sentry and Datadog
+/ticket-creator prepare the Q4 planning meeting
+```
+
+**Pick the list, priority or screenshots**: name them in the request.
+
+```
+/ticket-creator urgent: checkout page crashes, list Bugs-QA, screenshots of http://localhost:3000/checkout
+```
 
 ## Troubleshooting
 
